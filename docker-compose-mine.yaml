@@ -208,7 +208,7 @@ services:
     command: etcd -advertise-client-urls=http://127.0.0.1:2379 -listen-client-urls http://0.0.0.0:2379 --data-dir /etcd
 
   minio:
-    image: minio/minio:${MINIO_VERSION:-RELEASE.2023-03-20T20-16-18Z}
+    image: minio/minio:${MINIO_VERSION:-RELEASE.2024-08-29T01-40-52Z}
     environment:
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin}
