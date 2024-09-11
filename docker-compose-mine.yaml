@@ -1,0 +1,130 @@
+version: '3'
+
+x-shared-api-worker-env: &shared-api-worker-env
+  LOG_LEVEL: ${LOG_LEVEL:-INFO}
+  DEBUG: ${DEBUG:-false}
+  FLASK_DEBUG: ${FLASK_DEBUG:-false}
+  SECRET_KEY: ${SECRET_KEY:-sk-9f73s3ljTXVcMT3Blb3ljTqtsKiGHXVcMT3BlbkFJLK7U}
+  CONSOLE_WEB_URL: ${CONSOLE_WEB_URL:-}
+  CONSOLE_API_URL: ${CONSOLE_API_URL:-}
+  SERVICE_API_URL: ${SERVICE_API_URL:-}
+  APP_WEB_URL: ${APP_WEB_URL:-}
+  CHECK_UPDATE_URL: ${CHECK_UPDATE_URL:-https://updates.dify.ai}
+  OPENAI_API_BASE: ${OPENAI_API_BASE:-https://api.openai.com/v1}
+  DEPLOY_ENV: ${DEPLOY_ENV:-PRODUCTION}
+  SQLALCHEMY_POOL_SIZE: ${SQLALCHEMY_POOL_SIZE:-30}
+  SQLALCHEMY_POOL_RECYCLE: ${SQLALCHEMY_POOL_RECYCLE:-3600}
+  SQLALCHEMY_ECHO: ${SQLALCHEMY_ECHO:-false}
+  CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://:difyai123456@redis:6379/1}
+  STORAGE_TYPE: ${STORAGE_TYPE:-local}
+  STORAGE_LOCAL_PATH: ${STORAGE_LOCAL_PATH:-storage}
+  VECTOR_STORE: ${VECTOR_STORE:-weaviate}
+  UPLOAD_FILE_SIZE_LIMIT: ${UPLOAD_FILE_SIZE_LIMIT:-15}
+  UPLOAD_FILE_BATCH_LIMIT: ${UPLOAD_FILE_BATCH_LIMIT:-5}
+  ETL_TYPE: ${ETL_TYPE:-dify}
+  MULTIMODAL_SEND_IMAGE_FORMAT: ${MULTIMODAL_SEND_IMAGE_FORMAT:-base64}
+  UPLOAD_IMAGE_FILE_SIZE_LIMIT: ${UPLOAD_IMAGE_FILE_SIZE_LIMIT:-10}
+  INVITE_EXPIRY_HOURS: ${INVITE_EXPIRY_HOURS:-72}
+  RESET_PASSWORD_TOKEN_EXPIRY_HOURS: ${RESET_PASSWORD_TOKEN_EXPIRY_HOURS:-24}
+
+services:
+  api:
+    image: langgenius/dify-api:${DIFY_API_VERSION:-0.8.0}
+    environment:
+      <<: *shared-api-worker-env
+      MODE: api
+      DB_USERNAME: ${DB_USERNAME:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-difyai123456}
+      DB_HOST: ${DB_HOST:-db}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_DATABASE: ${DB_DATABASE:-dify}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-difyai123456}
+      WEAVIATE_ENDPOINT: ${WEAVIATE_ENDPOINT:-http://weaviate:8080}
+      WEAVIATE_API_KEY: ${WEAVIATE_API_KEY:-WVF5YThaHlkYwhGUSmCRgsX3tD5ngdN8pkih}
+    volumes:
+      - dify_api_storage:/app/api/storage
+
+  worker:
+    image: langgenius/dify-api:${DIFY_API_VERSION:-0.8.0}
+    environment:
+      <<: *shared-api-worker-env
+      MODE: worker
+      DB_USERNAME: ${DB_USERNAME:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-difyai123456}
+      DB_HOST: ${DB_HOST:-db}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_DATABASE: ${DB_DATABASE:-dify}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-difyai123456}
+      WEAVIATE_ENDPOINT: ${WEAVIATE_ENDPOINT:-http://weaviate:8080}
+      WEAVIATE_API_KEY: ${WEAVIATE_API_KEY:-WVF5YThaHlkYwhGUSmCRgsX3tD5ngdN8pkih}
+    volumes:
+      - dify_api_storage:/app/api/storage
+
+  web:
+    image: langgenius/dify-web:${DIFY_WEB_VERSION:-0.8.0}
+    environment:
+      CONSOLE_API_URL: ${CONSOLE_API_URL:-}
+      APP_API_URL: ${APP_API_URL:-}
+      NEXT_TELEMETRY_DISABLED: ${NEXT_TELEMETRY_DISABLED:-1}
+
+  db:
+    image: postgres:${POSTGRES_VERSION:-15-alpine}
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-difyai123456}
+      POSTGRES_DB: ${POSTGRES_DB:-dify}
+      PGDATA: ${PGDATA:-/var/lib/postgresql/data/pgdata}
+    command: postgres -c 'max_connections=${POSTGRES_MAX_CONNECTIONS:-100}'
+    volumes:
+      - dify_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready"]
+      interval: 1s
+      timeout: 3s
+      retries: 30
+
+  redis:
+    image: redis:${REDIS_VERSION:-6-alpine}
+    volumes:
+      - dify_redis_data:/data
+    command: redis-server --requirepass ${REDIS_PASSWORD:-difyai123456}
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+
+  sandbox:
+    image: langgenius/dify-sandbox:${DIFY_SANDBOX_VERSION:-0.2.7}
+    environment:
+      API_KEY: ${SANDBOX_API_KEY:-dify-sandbox}
+      GIN_MODE: ${SANDBOX_GIN_MODE:-release}
+      WORKER_TIMEOUT: ${SANDBOX_WORKER_TIMEOUT:-15}
+      ENABLE_NETWORK: ${SANDBOX_ENABLE_NETWORK:-true}
+      SANDBOX_PORT: ${SANDBOX_PORT:-8194}
+    volumes:
+      - dify_sandbox_dependencies:/dependencies
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8194/health"]
+
+  weaviate:
+    image: semitechnologies/weaviate:${WEAVIATE_VERSION:-1.19.0}
+    volumes:
+      - dify_weaviate_data:/var/lib/weaviate
+    environment:
+      QUERY_DEFAULTS_LIMIT: ${WEAVIATE_QUERY_DEFAULTS_LIMIT:-25}
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: ${WEAVIATE_AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED:-false}
+      DEFAULT_VECTORIZER_MODULE: ${WEAVIATE_DEFAULT_VECTORIZER_MODULE:-none}
+      CLUSTER_HOSTNAME: ${WEAVIATE_CLUSTER_HOSTNAME:-node1}
+      AUTHENTICATION_APIKEY_ENABLED: ${WEAVIATE_AUTHENTICATION_APIKEY_ENABLED:-true}
+      AUTHENTICATION_APIKEY_ALLOWED_KEYS: ${WEAVIATE_AUTHENTICATION_APIKEY_ALLOWED_KEYS:-WVF5YThaHlkYwhGUSmCRgsX3tD5ngdN8pkih}
+      AUTHENTICATION_APIKEY_USERS: ${WEAVIATE_AUTHENTICATION_APIKEY_USERS:-hello@dify.ai}
+      AUTHORIZATION_ADMINLIST_ENABLED: ${WEAVIATE_AUTHORIZATION_ADMINLIST_ENABLED:-true}
+      AUTHORIZATION_ADMINLIST_USERS: ${WEAVIATE_AUTHORIZATION_ADMINLIST_USERS:-hello@dify.ai}
+
+volumes:
+  dify_api_storage:
+  dify_db_data:
+  dify_redis_data:
+  dify_sandbox_dependencies:
+  dify_weaviate_data:
