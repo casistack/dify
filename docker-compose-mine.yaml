@@ -178,15 +178,6 @@ services:
       CHROMA_SERVER_AUTHN_PROVIDER: ${CHROMA_SERVER_AUTHN_PROVIDER:-chromadb.auth.token_authn.TokenAuthenticationServerProvider}
       IS_PERSISTENT: ${CHROMA_IS_PERSISTENT:-TRUE}
 
-  opensearch:
-    image: opensearchproject/opensearch:${OPENSEARCH_VERSION:-latest}
-    environment:
-      discovery.type: ${OPENSEARCH_DISCOVERY_TYPE:-single-node}
-      OPENSEARCH_JAVA_OPTS: -Xms512m -Xmx512m
-      bootstrap.memory_lock: "true"
-    volumes:
-      - dify_opensearch_data:/usr/share/opensearch/data
-
 
 volumes:
   dify_api_storage:
