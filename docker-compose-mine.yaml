@@ -207,8 +207,7 @@ services:
     restart: always
     volumes:
       - 'dify_redis_data:/data'
-    #command: 'redis-server --requirepass ${REDIS_PASSWORD:-difyai123456}'
-    command: 'redis-server --requirepass ${REDIS_PASSWORD} --user ${REDIS_USERNAME} on >${REDIS_PASSWORD} ~* allcommands'
+    command: 'redis-server --requirepass ${REDIS_PASSWORD:-difyai123456}'
     healthcheck:
       test:
         - CMD
