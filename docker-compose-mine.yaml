@@ -226,7 +226,7 @@ services:
       - dify_opensearch_data:/usr/share/opensearch/data
 
   myscale:
-    image: myscale/myscaledb:${MYSCALE_VERSION:-1.6.4}
+    image: myscale/myscaledb:${MYSCALE_VERSION:-1.7.1}
     restart: always
     volumes:
       - dify_myscale_data:/var/lib/clickhouse
