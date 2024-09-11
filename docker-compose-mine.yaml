@@ -178,27 +178,6 @@ services:
       CHROMA_SERVER_AUTHN_PROVIDER: ${CHROMA_SERVER_AUTHN_PROVIDER:-chromadb.auth.token_authn.TokenAuthenticationServerProvider}
       IS_PERSISTENT: ${CHROMA_IS_PERSISTENT:-TRUE}
 
-  milvus-standalone:
-    image: milvusdb/milvus:${MILVUS_VERSION:-latest}
-    command: ["milvus", "run", "standalone"]
-    environment:
-      ETCD_ENDPOINTS: ${ETCD_ENDPOINTS:-etcd:2379}
-      MINIO_ADDRESS: ${MINIO_ADDRESS:-minio:9000}
-      common.security.authorizationEnabled: ${MILVUS_AUTHORIZATION_ENABLED:-true}
-    volumes:
-      - dify_milvus_data:/var/lib/milvus
-
-  etcd:
-    image: quay.io/coreos/etcd:${ETCD_VERSION:-v3.5.5}
-    environment:
-      ETCD_AUTO_COMPACTION_MODE: ${ETCD_AUTO_COMPACTION_MODE:-revision}
-      ETCD_AUTO_COMPACTION_RETENTION: ${ETCD_AUTO_COMPACTION_RETENTION:-1000}
-      ETCD_QUOTA_BACKEND_BYTES: ${ETCD_QUOTA_BACKEND_BYTES:-4294967296}
-      ETCD_SNAPSHOT_COUNT: ${ETCD_SNAPSHOT_COUNT:-50000}
-    volumes:
-      - dify_etcd_data:/etcd
-    command: etcd -advertise-client-urls=http://127.0.0.1:2379 -listen-client-urls http://0.0.0.0:2379 --data-dir /etcd
-
   opensearch:
     image: opensearchproject/opensearch:${OPENSEARCH_VERSION:-latest}
     environment:
@@ -208,11 +187,6 @@ services:
     volumes:
       - dify_opensearch_data:/usr/share/opensearch/data
 
-  myscale:
-    image: myscale/myscaledb:${MYSCALE_VERSION:-1.7.1}
-    restart: always
-    volumes:
-      - dify_myscale_data:/var/lib/clickhouse
 
 volumes:
   dify_api_storage:
