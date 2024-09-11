@@ -152,14 +152,6 @@ services:
       AUTHORIZATION_ADMINLIST_ENABLED: ${WEAVIATE_AUTHORIZATION_ADMINLIST_ENABLED:-true}
       AUTHORIZATION_ADMINLIST_USERS: ${WEAVIATE_AUTHORIZATION_ADMINLIST_USERS:-hello@dify.ai}
 
-  qdrant:
-    image: langgenius/qdrant:${QDRANT_VERSION:-v1.7.3}
-    restart: always
-    volumes:
-      - dify_qdrant_data:/qdrant/storage
-    environment:
-      QDRANT_API_KEY: ${QDRANT_API_KEY:-difyai123456}
-
   pgvector:
     image: pgvector/pgvector:${PGVECTOR_VERSION:-pg16}
     restart: always
@@ -206,15 +198,6 @@ services:
     volumes:
       - dify_etcd_data:/etcd
     command: etcd -advertise-client-urls=http://127.0.0.1:2379 -listen-client-urls http://0.0.0.0:2379 --data-dir /etcd
-
-  minio:
-    image: minio/minio:${MINIO_VERSION:-RELEASE.2024-08-29T01-40-52Z}
-    environment:
-      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
-      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin}
-    volumes:
-      - dify_minio_data:/minio_data
-    command: minio server /minio_data --console-address ":9001"
 
   opensearch:
     image: opensearchproject/opensearch:${OPENSEARCH_VERSION:-latest}
