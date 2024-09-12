@@ -2,6 +2,9 @@ services:
   api:
     image: 'langgenius/dify-api:${DIFY_API_VERSION:-main}'
     restart: always
+    ports:
+      - "3000"
+      - "5001"
     environment:
       MODE: api
       LOG_LEVEL: '${LOG_LEVEL:-INFO}'
