@@ -91,6 +91,9 @@ services:
       - 'dify_api_storage:/app/api/storage'
   worker-dify:
     image: 'langgenius/dify-api:${DIFY_API_VERSION:-main}'
+    ports:
+      - "3000"
+      - "5001"    
     restart: always
     environment:
       MODE: worker
@@ -176,6 +179,9 @@ services:
       SSRF_PROXY_HTTPS_URL: '${SSRF_PROXY_HTTPS_URL:-http://ssrf_proxy:3128}'
   web-dify:
     image: 'langgenius/dify-web:${DIFY_WEB_VERSION:-main}'
+    ports:
+      - "3000"
+      - "5001"    
     restart: always
     environment:
       CONSOLE_API_URL: '${CONSOLE_API_URL:-}'
@@ -217,7 +223,7 @@ services:
         - redis-cli
         - ping
   sandbox:
-    image: 'langgenius/dify-sandbox:${DIFY_SANDBOX_VERSION:-main}'
+    image: 'langgenius/dify-sandbox:${DIFY_SANDBOX_VERSION:-main}' 
     restart: always
     environment:
       API_KEY: '${SANDBOX_API_KEY:-dify-sandbox}'
@@ -237,6 +243,8 @@ services:
         - 'http://localhost:8194/health'
   ssrf_proxy:
     image: 'ubuntu/squid:${SQUID_VERSION:-latest}'
+    ports:
+      - "3128"    
     restart: always
     environment:
       HTTP_PORT: '${SSRF_HTTP_PORT:-3128}'
