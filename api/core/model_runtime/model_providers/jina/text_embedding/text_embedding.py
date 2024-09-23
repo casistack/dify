@@ -27,6 +27,38 @@ class JinaTextEmbeddingModel(TextEmbeddingModel):
 
     api_base: str = "https://api.jina.ai/v1"
 
+    def _to_payload(self, model: str, texts: list[str], credentials: dict) -> dict:
+        """
+        Parse model credentials
+
+        :param model: model name
+        :param credentials: model credentials
+        :param texts: texts to embed
+        :return: parsed credentials
+        """
+
+        def transform_jina_input_text(model, text):
+            if model == "jina-clip-v1":
+                return {"text": text}
+            return text
+
+        data = {"model": model, "input": [transform_jina_input_text(model, text) for text in texts]}
+
+        task = credentials.get("task")
+        dimensions = credentials.get("dimensions")
+        late_chunking = credentials.get("late_chunking")
+
+        if task is not None:
+            data["task"] = task
+
+        if dimensions is not None:
+            data["dimensions"] = int(dimensions)
+
+        if late_chunking is not None:
+            data["late_chunking"] = late_chunking
+
+        return data
+
     def _invoke(
         self, model: str, credentials: dict, texts: list[str], user: Optional[str] = None
     ) -> TextEmbeddingResult:
@@ -44,18 +76,12 @@ class JinaTextEmbeddingModel(TextEmbeddingModel):
             raise CredentialsValidateFailedError("api_key is required")
 
         base_url = credentials.get("base_url", self.api_base)
-        if base_url.endswith("/"):
-            base_url = base_url[:-1]
+        base_url = base_url.removesuffix("/")
 
         url = base_url + "/embeddings"
         headers = {"Authorization": "Bearer " + api_key, "Content-Type": "application/json"}
 
-        def transform_jina_input_text(model, text):
-            if model == "jina-clip-v1":
-                return {"text": text}
-            return text
-
-        data = {"model": model, "input": [transform_jina_input_text(model, text) for text in texts]}
+        data = self._to_payload(model=model, texts=texts, credentials=credentials)
 
         try:
             response = post(url, headers=headers, data=dumps(data))
