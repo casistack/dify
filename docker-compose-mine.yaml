@@ -93,8 +93,8 @@ services:
       WORKFLOW_CALL_MAX_DEPTH: ${WORKFLOW_MAX_EXECUTION_TIME:-5} 
       SSRF_PROXY_HTTP_URL: '${SSRF_PROXY_HTTP_URL:-http://ssrf_proxy:3128}'
       SSRF_PROXY_HTTPS_URL: '${SSRF_PROXY_HTTPS_URL:-http://ssrf_proxy:3128}'
-    volumes:
-      - 'dify_api_storage:/app/api/storage'
+    #volumes:
+      #- 'dify_api_storage:/app/api/storage'
   worker-dify:
     image: 'langgenius/dify-api:${DIFY_API_VERSION:-main}'
     ports:
@@ -302,7 +302,7 @@ services:
         ${CHROMA_SERVER_AUTHN_PROVIDER:-chromadb.auth.token_authn.TokenAuthenticationServerProvider}
       IS_PERSISTENT: '${CHROMA_IS_PERSISTENT:-TRUE}'
 volumes:
-  dify_api_storage: null
+  #dify_api_storage: null
   dify_db_data: null
   dify_redis_data: null
   dify_sandbox_dependencies: null
