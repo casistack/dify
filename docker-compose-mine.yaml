@@ -302,7 +302,7 @@ services:
         ${CHROMA_SERVER_AUTHN_PROVIDER:-chromadb.auth.token_authn.TokenAuthenticationServerProvider}
       IS_PERSISTENT: '${CHROMA_IS_PERSISTENT:-TRUE}'
 volumes:
-  #dify_api_storage: null
+  dify_api_storage: null
   dify_db_data: null
   dify_redis_data: null
   dify_sandbox_dependencies: null
