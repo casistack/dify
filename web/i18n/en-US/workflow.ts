@@ -104,6 +104,8 @@ const translation = {
     branch: 'BRANCH',
     onFailure: 'On Failure',
     addFailureBranch: 'Add Fail Branch',
+    loadMore: 'Load More Workflows',
+    noHistory: 'No History',
   },
   env: {
     envPanelTitle: 'Environment Variables',
@@ -328,6 +330,20 @@ const translation = {
         partialSucceeded: {
           tip: 'There are {{num}} nodes in the process running abnormally, please go to tracing to check the logs.',
         },
+      },
+      retry: {
+        retry: 'Retry',
+        retryOnFailure: 'retry on failure',
+        maxRetries: 'max retries',
+        retryInterval: 'retry interval',
+        retryTimes: 'Retry {{times}} times on failure',
+        retrying: 'Retrying...',
+        retrySuccessful: 'Retry successful',
+        retryFailed: 'Retry failed',
+        retryFailedTimes: '{{times}} retries failed',
+        times: 'times',
+        ms: 'ms',
+        retries: '{{num}} Retries',
       },
     },
     start: {
