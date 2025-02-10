@@ -99,9 +99,6 @@ services:
       SSRF_PROXY_HTTPS_URL: '${SSRF_PROXY_HTTPS_URL:-http://ssrf_proxy:3128}'
     volumes:
       - 'dify_api_storage:/app/api/storage'
-    networks:
-      - ssrf_proxy_network
-      - default
 
   worker-dify:
     image: 'langgenius/dify-api:${DIFY_API_VERSION:-0.15.3}'
@@ -204,9 +201,6 @@ services:
       SSRF_PROXY_HTTPS_URL: '${SSRF_PROXY_HTTPS_URL:-http://ssrf_proxy:3128}'
     volumes:
       - 'dify_api_storage:/app/api/storage'
-    networks:
-      - ssrf_proxy_network
-      - default
 
   web-dify:
     image: 'langgenius/dify-web:${DIFY_WEB_VERSION:-0.15.3}'
@@ -279,8 +273,6 @@ services:
         - curl
         - '-f'
         - 'http://localhost:8194/health'
-    networks:
-      - ssrf_proxy_network
 
   ssrf_proxy:
     image: 'ubuntu/squid:${SQUID_VERSION:-latest}'
