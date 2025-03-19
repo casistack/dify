@@ -1,6 +1,6 @@
 services:
   api-dify:
-    image: 'langgenius/dify-api:${DIFY_API_VERSION:-0.15.3}'
+    image: 'langgenius/dify-api:${DIFY_API_VERSION:-1.1.0}'
     restart: always
     ports:
       - "3000"
@@ -15,7 +15,7 @@ services:
       LOG_TZ: '${LOG_TZ:-UTC}'
       DEBUG: '${DEBUG:-false}'
       FLASK_DEBUG: '${FLASK_DEBUG:-false}'
-      SECRET_KEY: '${SECRET_KEY:-sk-9f73s3ljTXVcMT3Blb3ljTqtsKiGHXVcMT3BlbkFJLK7U}'
+      SECRET_KEY: '${SECRET_KEY:-}'
       INIT_PASSWORD: '${INIT_PASSWORD:-}'
       CONSOLE_WEB_URL: '${CONSOLE_WEB_URL:-}'
       CONSOLE_API_URL: '${CONSOLE_API_URL:-}'
@@ -103,6 +103,10 @@ services:
       PLUGIN_DEFAULT_READ_TIMEOUT: '${PLUGIN_DEFAULT_READ_TIMEOUT:-60}'
       PLUGIN_MAX_RETRIES: '${PLUGIN_MAX_RETRIES:-3}'
       PLUGIN_MAX_EXECUTION_TIME: '${PLUGIN_MAX_EXECUTION_TIME:-60}'
+      PLUGIN_REMOTE_INSTALL_HOST: '${EXPOSE_PLUGIN_DEBUGGING_HOST:-localhost}'
+      PLUGIN_REMOTE_INSTALL_PORT: '${EXPOSE_PLUGIN_DEBUGGING_PORT:-5003}'
+      PLUGIN_MAX_PACKAGE_SIZE: '${PLUGIN_MAX_PACKAGE_SIZE:-52428800}'
+      INNER_API_KEY_FOR_PLUGIN: '${PLUGIN_DIFY_INNER_API_KEY:-}'
       ANTHROPIC_API_KEY: '${ANTHROPIC_API_KEY:-}'
       ANTHROPIC_API_BASE: '${ANTHROPIC_API_BASE:-https://api.anthropic.com}'
       AZURE_OPENAI_API_KEY: '${AZURE_OPENAI_API_KEY:-}'
@@ -115,7 +119,7 @@ services:
       - 'dify_api_storage:/app/api/storage'
 
   worker-dify:
-    image: 'langgenius/dify-api:${DIFY_API_VERSION:-0.15.3}'
+    image: 'langgenius/dify-api:${DIFY_API_VERSION:-1.1.0}'
     restart: always
     ports:
       - "3000"
@@ -213,12 +217,8 @@ services:
       CODE_EXECUTION_API_KEY: '${CODE_EXECUTION_API_KEY:-dify-sandbox}'
       SSRF_PROXY_HTTP_URL: '${SSRF_PROXY_HTTP_URL:-http://ssrf_proxy:3128}'
       SSRF_PROXY_HTTPS_URL: '${SSRF_PROXY_HTTPS_URL:-http://ssrf_proxy:3128}'
-      PLUGIN_URL: '${PLUGIN_URL:-}'
-      PLUGIN_CREDENTIALS_KEY: '${PLUGIN_CREDENTIALS_KEY:-}'
-      PLUGIN_DEFAULT_CONNECT_TIMEOUT: '${PLUGIN_DEFAULT_CONNECT_TIMEOUT:-10}'
-      PLUGIN_DEFAULT_READ_TIMEOUT: '${PLUGIN_DEFAULT_READ_TIMEOUT:-60}'
-      PLUGIN_MAX_RETRIES: '${PLUGIN_MAX_RETRIES:-3}'
-      PLUGIN_MAX_EXECUTION_TIME: '${PLUGIN_MAX_EXECUTION_TIME:-60}'
+      PLUGIN_MAX_PACKAGE_SIZE: '${PLUGIN_MAX_PACKAGE_SIZE:-52428800}'
+      INNER_API_KEY_FOR_PLUGIN: '${PLUGIN_DIFY_INNER_API_KEY:-QaHbTe77CtuXmsfyhR7+vRjI/+XbV1AaFy691iy+kGDv2Jvy0/eAh8Y1}'
       ANTHROPIC_API_KEY: '${ANTHROPIC_API_KEY:-}'
       ANTHROPIC_API_BASE: '${ANTHROPIC_API_BASE:-https://api.anthropic.com}'
       AZURE_OPENAI_API_KEY: '${AZURE_OPENAI_API_KEY:-}'
@@ -362,6 +362,35 @@ services:
         ${CHROMA_SERVER_AUTHN_PROVIDER:-chromadb.auth.token_authn.TokenAuthenticationServerProvider}
       IS_PERSISTENT: '${CHROMA_IS_PERSISTENT:-TRUE}'
 
+  plugin_daemon:
+    image: 'langgenius/dify-plugin-daemon:0.0.5-local'
+    restart: always
+    environment:
+      DB_USERNAME: '${DB_USERNAME:-postgres}'
+      DB_PASSWORD: '${DB_PASSWORD:-difyai123456}'
+      DB_HOST: '${DB_HOST:-db}'
+      DB_PORT: '${DB_PORT:-5432}'
+      DB_DATABASE: '${DB_PLUGIN_DATABASE:-dify_plugin}'
+      SERVER_PORT: '${PLUGIN_DAEMON_PORT:-5002}'
+      SERVER_KEY: '${PLUGIN_DAEMON_KEY:-}'
+      MAX_PLUGIN_PACKAGE_SIZE: '${PLUGIN_MAX_PACKAGE_SIZE:-52428800}'
+      PPROF_ENABLED: '${PLUGIN_PPROF_ENABLED:-false}'
+      DIFY_INNER_API_URL: '${PLUGIN_DIFY_INNER_API_URL:-http://api-dify:5001}'
+      DIFY_INNER_API_KEY: '${PLUGIN_DIFY_INNER_API_KEY:-}'
+      PLUGIN_REMOTE_INSTALLING_HOST: '${PLUGIN_DEBUGGING_HOST:-0.0.0.0}'
+      PLUGIN_REMOTE_INSTALLING_PORT: '${PLUGIN_DEBUGGING_PORT:-5003}'
+      PLUGIN_WORKING_PATH: '${PLUGIN_WORKING_PATH:-/app/storage/cwd}'
+      FORCE_VERIFYING_SIGNATURE: '${FORCE_VERIFYING_SIGNATURE:-true}'
+      PYTHON_ENV_INIT_TIMEOUT: '${PLUGIN_PYTHON_ENV_INIT_TIMEOUT:-120}'
+      PLUGIN_MAX_EXECUTION_TIMEOUT: '${PLUGIN_MAX_EXECUTION_TIMEOUT:-600}'
+      PIP_MIRROR_URL: '${PIP_MIRROR_URL:-}'
+    ports:
+      - "${EXPOSE_PLUGIN_DEBUGGING_PORT:-5003}:${PLUGIN_DEBUGGING_PORT:-5003}"
+    volumes:
+      - plugin_daemon:/app/storage
+    depends_on:
+      - db
+
 volumes:
   dify_api_storage: null
   dify_db_data: null
@@ -370,3 +399,4 @@ volumes:
   dify_weaviate_data: null
   dify_pgvector_data: null
   dify_chroma_data: null
+  plugin_daemon: null
