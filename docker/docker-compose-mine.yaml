@@ -97,6 +97,12 @@ services:
       CODE_EXECUTION_API_KEY: '${CODE_EXECUTION_API_KEY:-dify-sandbox}'
       SSRF_PROXY_HTTP_URL: '${SSRF_PROXY_HTTP_URL:-http://ssrf_proxy:3128}'
       SSRF_PROXY_HTTPS_URL: '${SSRF_PROXY_HTTPS_URL:-http://ssrf_proxy:3128}'
+      PLUGIN_URL: '${PLUGIN_URL:-}'
+      PLUGIN_CREDENTIALS_KEY: '${PLUGIN_CREDENTIALS_KEY:-}'
+      PLUGIN_DEFAULT_CONNECT_TIMEOUT: '${PLUGIN_DEFAULT_CONNECT_TIMEOUT:-10}'
+      PLUGIN_DEFAULT_READ_TIMEOUT: '${PLUGIN_DEFAULT_READ_TIMEOUT:-60}'
+      PLUGIN_MAX_RETRIES: '${PLUGIN_MAX_RETRIES:-3}'
+      PLUGIN_MAX_EXECUTION_TIME: '${PLUGIN_MAX_EXECUTION_TIME:-60}'
     volumes:
       - 'dify_api_storage:/app/api/storage'
 
@@ -199,6 +205,12 @@ services:
       CODE_EXECUTION_API_KEY: '${CODE_EXECUTION_API_KEY:-dify-sandbox}'
       SSRF_PROXY_HTTP_URL: '${SSRF_PROXY_HTTP_URL:-http://ssrf_proxy:3128}'
       SSRF_PROXY_HTTPS_URL: '${SSRF_PROXY_HTTPS_URL:-http://ssrf_proxy:3128}'
+      PLUGIN_URL: '${PLUGIN_URL:-}'
+      PLUGIN_CREDENTIALS_KEY: '${PLUGIN_CREDENTIALS_KEY:-}'
+      PLUGIN_DEFAULT_CONNECT_TIMEOUT: '${PLUGIN_DEFAULT_CONNECT_TIMEOUT:-10}'
+      PLUGIN_DEFAULT_READ_TIMEOUT: '${PLUGIN_DEFAULT_READ_TIMEOUT:-60}'
+      PLUGIN_MAX_RETRIES: '${PLUGIN_MAX_RETRIES:-3}'
+      PLUGIN_MAX_EXECUTION_TIME: '${PLUGIN_MAX_EXECUTION_TIME:-60}'
     volumes:
       - 'dify_api_storage:/app/api/storage'
 
@@ -341,4 +353,4 @@ volumes:
   dify_sandbox_dependencies: null
   dify_weaviate_data: null
   dify_pgvector_data: null
-  dify_chroma_data: null 
+  dify_chroma_data: null
