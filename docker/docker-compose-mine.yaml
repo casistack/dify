@@ -320,6 +320,7 @@ services:
       SANDBOX_HOST: '${SSRF_SANDBOX_HOST:-sandbox}'
       SANDBOX_PORT: '${SANDBOX_PORT:-8194}'
       ALLOWED_DOMAINS: '${ALLOWED_DOMAINS:-marketplace.dify.ai}'
+      DNS_NAMESERVERS: '${DNS_NAMESERVERS:-8.8.8.8 8.8.4.4}'
 
   weaviate:
     image: 'semitechnologies/weaviate:${WEAVIATE_VERSION:-1.19.0}'
