@@ -488,6 +488,70 @@ import { Row, Col, Properties, Property, Heading, SubProperty, Paragraph } from 
 ---
 
 <Heading
+  url='/app/feedbacks'
+  method='GET'
+  title='アプリのメッセージの「いいね」とフィードバックを取得'
+  name='#app-feedbacks'
+/>
+<Row>
+  <Col>
+    アプリのエンドユーザーからのフィードバックや「いいね」を取得します。
+
+    ### クエリ
+    <Properties>
+      <Property name='page' type='string' key='page'>
+       （任意）ページ番号。デフォルト値：1
+      </Property>
+    </Properties>
+
+    <Properties>
+      <Property name='limit' type='string' key='limit'>
+       （任意）1ページあたりの件数。デフォルト値：20
+      </Property>
+    </Properties>
+
+    ### レスポンス
+    - `data` (リスト) このアプリの「いいね」とフィードバックの一覧を返します。
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="GET" label="/app/feedbacks" targetCode={`curl -X GET '${props.appDetail.api_base_url}/app/feedbacks?page=1&limit=20'`}>
+
+    ```bash {{ title: 'cURL' }}
+    curl -X GET '${props.appDetail.api_base_url}/app/feedbacks?page=1&limit=20' \
+    --header 'Authorization: Bearer {api_key}' \
+    --header 'Content-Type: application/json'
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup title="Response">
+    ```json {{ title: 'Response' }}
+        {
+        "data": [
+            {
+                "id": "8c0fbed8-e2f9-49ff-9f0e-15a35bdd0e25",
+                "app_id": "f252d396-fe48-450e-94ec-e184218e7346",
+                "conversation_id": "2397604b-9deb-430e-b285-4726e51fd62d",
+                "message_id": "709c0b0f-0a96-4a4e-91a4-ec0889937b11",
+                "rating": "like",
+                "content": "message feedback information-3",
+                "from_source": "user",
+                "from_end_user_id": "74286412-9a1a-42c1-929c-01edb1d381d5",
+                "from_account_id": null,
+                "created_at": "2025-04-24T09:24:38",
+                "updated_at": "2025-04-24T09:24:38"
+            }
+        ]
+        }
+    ```
+    </CodeGroup>
+  </Col>
+</Row>
+---
+
+
+<Heading
   url='/messages/{message_id}/suggested'
   method='GET'
   title='次の推奨質問'
@@ -764,10 +828,8 @@ import { Row, Col, Properties, Property, Heading, SubProperty, Paragraph } from 
     </CodeGroup>
 
     <CodeGroup title="応答">
-    ```json {{ title: '応答' }}
-    {
-      "result": "success"
-    }
+    ```text {{ title: '応答' }}
+    204 No Content
     ```
     </CodeGroup>
   </Col>
@@ -836,6 +898,106 @@ import { Row, Col, Properties, Property, Heading, SubProperty, Paragraph } from 
         "introduction": "",
         "created_at": 1705569238,
         "updated_at": 1705569238
+    }
+    ```
+    </CodeGroup>
+  </Col>
+</Row>
+
+---
+
+<Heading
+  url='/conversations/:conversation_id/variables'
+  method='GET'
+  title='会話変数の取得'
+  name='#conversation-variables'
+/>
+<Row>
+  <Col>
+    特定の会話から変数を取得します。このエンドポイントは、会話中に取得された構造化データを抽出するのに役立ちます。
+
+    ### パスパラメータ
+
+    <Properties>
+      <Property name='conversation_id' type='string' key='conversation_id'>
+        変数を取得する会話のID。
+      </Property>
+    </Properties>
+
+    ### クエリパラメータ
+
+    <Properties>
+      <Property name='user' type='string' key='user'>
+        ユーザー識別子。開発者によって定義されたルールに従い、アプリケーション内で一意である必要があります。
+      </Property>
+      <Property name='last_id' type='string' key='last_id'>
+          (Optional)現在のページの最後の記録のID、デフォルトはnullです。
+      </Property>
+      <Property name='limit' type='int' key='limit'>
+          (Optional)1回のリクエストで返す記録の数、デフォルトは最新の20件です。最大100、最小1。
+      </Property>
+    </Properties>
+
+    ### レスポンス
+
+    - `limit` (int) ページごとのアイテム数
+    - `has_more` (bool) さらにアイテムがあるかどうか
+    - `data` (array[object]) 変数のリスト
+      - `id` (string) 変数ID
+      - `name` (string) 変数名
+      - `value_type` (string) 変数タイプ（文字列、数値、真偽値など）
+      - `value` (string) 変数値
+      - `description` (string) 変数の説明
+      - `created_at` (int) 作成タイムスタンプ
+      - `updated_at` (int) 最終更新タイムスタンプ
+
+    ### エラー
+    - 404, `conversation_not_exists`, 会話が見つかりません
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="GET" label="/conversations/:conversation_id/variables" targetCode={`curl -X GET '${props.appDetail.api_base_url}/conversations/{conversation_id}/variables?user=abc-123' \\\n--header 'Authorization: Bearer {api_key}'`}>
+
+    ```bash {{ title: 'cURL' }}
+    curl -X GET '${props.appDetail.api_base_url}/conversations/{conversation_id}/variables?user=abc-123' \
+    --header 'Authorization: Bearer {api_key}'
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup title="Request with variable name filter">
+    ```bash {{ title: 'cURL' }}
+    curl -X GET '${props.appDetail.api_base_url}/conversations/{conversation_id}/variables?user=abc-123&variable_name=customer_name' \
+    --header 'Authorization: Bearer {api_key}'
+    ```
+    </CodeGroup>
+
+    <CodeGroup title="Response">
+    ```json {{ title: 'Response' }}
+    {
+      "limit": 100,
+      "has_more": false,
+      "data": [
+        {
+          "id": "variable-uuid-1",
+          "name": "customer_name",
+          "value_type": "string",
+          "value": "John Doe",
+          "description": "会話から抽出された顧客名",
+          "created_at": 1650000000000,
+          "updated_at": 1650000000000
+        },
+        {
+          "id": "variable-uuid-2",
+          "name": "order_details",
+          "value_type": "json",
+          "value": "{\"product\":\"Widget\",\"quantity\":5,\"price\":19.99}",
+          "description": "顧客の注文詳細",
+          "created_at": 1650000000000,
+          "updated_at": 1650000000000
+        }
+      ]
     }
     ```
     </CodeGroup>
