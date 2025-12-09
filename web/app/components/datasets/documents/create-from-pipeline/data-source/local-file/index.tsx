@@ -8,6 +8,7 @@ import cn from '@/utils/classnames'
 import type { CustomFile as File, FileItem } from '@/models/datasets'
 import { ToastContext } from '@/app/components/base/toast'
 import { upload } from '@/service/base'
+import { getFileUploadErrorMessage } from '@/app/components/base/file-uploader/utils'
 import I18n from '@/context/i18n'
 import { LanguagesSupported } from '@/i18n-config/language'
 import { IS_CE_EDITION } from '@/config'
@@ -15,12 +16,10 @@ import { Theme } from '@/types/app'
 import useTheme from '@/hooks/use-theme'
 import { useFileUploadConfig } from '@/service/use-common'
 import { useDataSourceStore, useDataSourceStoreWithSelector } from '../store'
-import produce from 'immer'
+import { produce } from 'immer'
 import dynamic from 'next/dynamic'
 
 const SimplePieChart = dynamic(() => import('@/app/components/base/simple-pie-chart'), { ssr: false })
-
-const FILES_NUMBER_LIMIT = 20
 
 export type LocalFileProps = {
   allowedExtensions: string[]
@@ -63,10 +62,11 @@ const LocalFile = ({
       .join(locale !== LanguagesSupported[1] ? ', ' : '、 ')
   }, [locale, allowedExtensions])
   const ACCEPTS = allowedExtensions.map((ext: string) => `.${ext}`)
-  const fileUploadConfig = useMemo(() => fileUploadConfigResponse ?? {
-    file_size_limit: 15,
-    batch_count_limit: 5,
-  }, [fileUploadConfigResponse])
+  const fileUploadConfig = useMemo(() => ({
+    file_size_limit: fileUploadConfigResponse?.file_size_limit ?? 15,
+    batch_count_limit: fileUploadConfigResponse?.batch_count_limit ?? 5,
+    file_upload_limit: fileUploadConfigResponse?.file_upload_limit ?? 5,
+  }), [fileUploadConfigResponse])
 
   const updateFile = useCallback((fileItem: FileItem, progress: number, list: FileItem[]) => {
     const { setLocalFileList } = dataSourceStore.getState()
@@ -121,6 +121,8 @@ const LocalFile = ({
     return isValidType && isValidSize
   }, [fileUploadConfig, notify, t, ACCEPTS])
 
+  type UploadResult = Awaited<ReturnType<typeof upload>>
+
   const fileUpload = useCallback(async (fileItem: FileItem): Promise<FileItem> => {
     const formData = new FormData()
     formData.append('file', fileItem.file)
@@ -136,10 +138,14 @@ const LocalFile = ({
       data: formData,
       onprogress: onProgress,
     }, false, undefined, '?source=datasets')
-      .then((res: File) => {
-        const completeFile = {
+      .then((res: UploadResult) => {
+        const updatedFile = Object.assign({}, fileItem.file, {
+          id: res.id,
+          ...(res as Partial<File>),
+        }) as File
+        const completeFile: FileItem = {
           fileID: fileItem.fileID,
-          file: res,
+          file: updatedFile,
           progress: -1,
         }
         const index = fileListRef.current.findIndex(item => item.fileID === fileItem.fileID)
@@ -148,7 +154,8 @@ const LocalFile = ({
         return Promise.resolve({ ...completeFile })
       })
       .catch((e) => {
-        notify({ type: 'error', message: e?.response?.code === 'forbidden' ? e?.response?.message : t('datasetCreation.stepOne.uploader.failed') })
+        const errorMessage = getFileUploadErrorMessage(e, t('datasetCreation.stepOne.uploader.failed'), t)
+        notify({ type: 'error', message: errorMessage })
         updateFile(fileItem, -2, fileListRef.current)
         return Promise.resolve({ ...fileItem })
       })
@@ -178,11 +185,12 @@ const LocalFile = ({
   }, [fileUploadConfig, uploadBatchFiles])
 
   const initialUpload = useCallback((files: File[]) => {
+    const filesCountLimit = fileUploadConfig.file_upload_limit
     if (!files.length)
       return false
 
-    if (files.length + localFileList.length > FILES_NUMBER_LIMIT && !IS_CE_EDITION) {
-      notify({ type: 'error', message: t('datasetCreation.stepOne.uploader.validation.filesNumber', { filesNumber: FILES_NUMBER_LIMIT }) })
+    if (files.length + localFileList.length > filesCountLimit && !IS_CE_EDITION) {
+      notify({ type: 'error', message: t('datasetCreation.stepOne.uploader.validation.filesNumber', { filesNumber: filesCountLimit }) })
       return false
     }
 
@@ -195,7 +203,7 @@ const LocalFile = ({
     updateFileList(newFiles)
     fileListRef.current = newFiles
     uploadMultipleFiles(preparedFiles)
-  }, [updateFileList, uploadMultipleFiles, notify, t, localFileList])
+  }, [fileUploadConfig.file_upload_limit, localFileList.length, updateFileList, uploadMultipleFiles, notify, t])
 
   const handleDragEnter = (e: DragEvent) => {
     e.preventDefault()
@@ -242,9 +250,10 @@ const LocalFile = ({
     updateFileList([...fileListRef.current])
   }
   const fileChangeHandle = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = [...(e.target.files ?? [])] as File[]
+    let files = [...(e.target.files ?? [])] as File[]
+    files = files.slice(0, fileUploadConfig.batch_count_limit)
     initialUpload(files.filter(isValid))
-  }, [isValid, initialUpload])
+  }, [isValid, initialUpload, fileUploadConfig.batch_count_limit])
 
   const { theme } = useTheme()
   const chartColor = useMemo(() => theme === Theme.dark ? '#5289ff' : '#296dff', [theme])
@@ -287,7 +296,7 @@ const LocalFile = ({
             <RiUploadCloud2Line className='mr-2 size-5' />
 
             <span>
-              {t('datasetCreation.stepOne.uploader.button')}
+              {notSupportBatchUpload ? t('datasetCreation.stepOne.uploader.buttonSingleFile') : t('datasetCreation.stepOne.uploader.button')}
               {allowedExtensions.length > 0 && (
                 <label className='ml-1 cursor-pointer text-text-accent' onClick={selectHandle}>{t('datasetCreation.stepOne.uploader.browse')}</label>
               )}
@@ -296,7 +305,8 @@ const LocalFile = ({
           <div>{t('datasetCreation.stepOne.uploader.tip', {
             size: fileUploadConfig.file_size_limit,
             supportTypes: supportTypesShowNames,
-            batchCount: fileUploadConfig.batch_count_limit,
+            batchCount: notSupportBatchUpload ? 1 : fileUploadConfig.batch_count_limit,
+            totalCount: fileUploadConfig.file_upload_limit,
           })}</div>
           {dragging && <div ref={dragRef} className='absolute left-0 top-0 h-full w-full' />}
         </div>
